@@ -7,20 +7,21 @@ import java.util.ListResourceBundle;
 import java.util.Scanner;
 import java.io.File;
 
-public class OS
+public class OSExtended
 {
     private static char[]R = new char[4];
     private static char[]IR = new char[4];
     private static char[]IC = new char[2];
     private static char[]C = new char[1];          // can we make it boolean??
     private static char[][] memory = new char[100][4];
-
+    private static BufferedReader reader;
     private static char[][]buffer=new char[10][4]; // To store DTA word here from file(you can remove this ,you can apply your own method)
     public static void doFinal(String path)
     {
         File file = new File(path);
         Scanner sc = new Scanner(path);
         try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            OSExtended.reader = reader;
             String line,nextLine="";
             boolean prevLineDTA = false;
             // Read the file line by line until the end is reached
@@ -33,25 +34,25 @@ public class OS
                 else if(line.startsWith("$DTA")){
 
                     //my code inserted
-                    char dummy='1';
-                    if(dummy=='1')
-                    {
-                        nextLine = reader.readLine();
-                        dummy='2';
-                    }
-                    int ind=0;
-                    for(int i=0;i<10;i++)
-                    {    for(int j=0;j<4;j++)
-                        {
-                            if (ind< nextLine.length())
-                            {
-                                buffer[i][j] = nextLine.charAt(ind);
-                                ind++;
-                            }
-                            else
-                            break;
-                        }
-                    }
+//                    char dummy='1';
+//                    if(dummy=='1')
+//                    {
+//                        nextLine = reader.readLine();
+//                        dummy='2';
+//                    }
+//                    int ind=0;
+//                    for(int i=0;i<10;i++)
+//                    {    for(int j=0;j<4;j++)
+//                        {
+//                            if (ind< nextLine.length())
+//                            {
+//                                buffer[i][j] = nextLine.charAt(ind);
+//                                ind++;
+//                            }
+//                            else
+//                            break;
+//                        }
+//                    }
                     //the code would read the next line from $DTA (only 1 line ) store in buffer and then execute() would be called
                     //till here
 
@@ -65,6 +66,8 @@ public class OS
 
                 else if(!prevLineDTA){
                     load(line);
+                    char[] temp = {'0', '0'};
+                    IC = temp;
                     System.out.println("Current line: " + line + "\n");
                     System.out.println("Memory:");
                     printMemory();
@@ -89,10 +92,6 @@ public class OS
 
     private static void load(String line)
     {
-//        char[] buff = new char[4];
-//        for(int i=0; i<line.length(); i++){
-//            buff = line.getChars();
-//        }
         int charIndex = 0;
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < memory[0].length; j++) {
@@ -115,22 +114,32 @@ public class OS
 
     private static void execute()
     {
-        for(int i=0;i<10;i++)
+        while(OSExtended.IC[1]!='9')
         {
-           String indexString=String.valueOf(i);
-           while(indexString.length()<2)
-           {
-             indexString='0'+indexString;
+            //get the address from IC in numeric form
+            //System.out.println("IC "+ Arrays.toString(IC));
+            int address = Character.getNumericValue(IC[0])*10 + Character.getNumericValue(IC[1]);
 
-           }
-           IC[0]=indexString.charAt(0);   // IC will store the block  index(keep track of current instruction block)
-           IC[1]=indexString.charAt(1);
+            //increment IC
+            int numericValue = Character.getNumericValue(IC[1]);
+            if (numericValue >= 0) {
+                IC[1] = Character.forDigit(numericValue + 1, 10);
+            } else {
+                // Handle the case where IC[1] is not a digit
+                System.out.println("IC[1] is not a valid digit.");
+                return;
+            }
+
+            //load instruction in IR
+           OSExtended.IR = OSExtended.memory[address];
+
+           //break if the instruction is null
+           if(IR[0]=='\u0000') break;
 
             int j=0;
 
-                String instruction=String.valueOf(memory[i][j])+String.valueOf(memory[i][j+1]);
-                j+=2;
-                int address=Integer.parseInt(String.valueOf(memory[i][j])+String.valueOf(memory[i][j+1]));
+                String instruction="" + IR[0] + IR[1];
+                address=Character.getNumericValue(IR[2])*10 + Character.getNumericValue(IR[3]);
 
                 j++;
                 switch(instruction)
@@ -153,7 +162,7 @@ public class OS
 
                         if(loadregister(address)==-1)
                         {
-                            System.out.println("Command:"+i+"LR"+ address+"Memory in IR already in use! can't allocate");
+                            System.out.println("LR"+ address+"Memory in IR already in use! can't allocate");
                         }
                             j++;
 
@@ -187,42 +196,46 @@ public class OS
         }
     }
 
-    private static void getdata(int address)
-    {
-
-        for(int i=0;i<10;i++)
-        {
-            if (address > 10 && address < 100)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    memory[address][j] = buffer[i][j];
+    private static void getdata(int address) {
+        if (address < 10 || address > 90) return;
+        try {
+            String line = reader.readLine();
+            int charIndex = 0;
+            for (int i = address; i <address+ 10; i++) {
+                for (int j = 0; j < memory[0].length; j++) {
+                    // Check if there are still characters in the string
+                    if (charIndex < line.length()) {
+                        memory[i][j] = line.charAt(charIndex);
+                        charIndex++;
+                    } else {
+                        // If the end of the string is reached, you may want to handle this case
+                        // For now, let's fill the remaining elements with a default character, say ' '
+                        while(j< memory[0].length){
+                            memory[i][j] = '\u0000';
+                            j++;
+                        }
+                        return;
+                    }
                 }
-                address++;
             }
-            else
-                break;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
     }
     private static  void  printdata(int address)
     {
-
-        for(int j=0;j<10;j++)
-        {
-            if (address > 10 && address < 100)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    System.out.print(memory[address][i]);
+        System.out.println();
+        for (int i = address; i <address+ 10; i++) {
+            for (int j = 0; j < memory[0].length; j++) {
+                if(memory[i][j]=='\u0000'){
+                    System.out.println();
+                    return;
                 }
+                System.out.print(memory[i][j]);
             }
-            else
-            {
-                break;
-            }
-            address++;
+            System.out.println();
         }
-
     }
     private  static int loadregister(int address)
     {
@@ -284,7 +297,7 @@ public class OS
     public static void main(String[] args)
     {
 
-        OS.doFinal("D:/Advay/JavaProjects/GeneralProblems/jobs.txt");
-
+        OSExtended.doFinal("D:/Advay/JavaProjects/GeneralProblems/jobs.txt");
+        //OS.doFinal("C:/Users/asita/OneDrive/Desktop/OS.txt");
     }
 }
