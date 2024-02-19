@@ -1,0 +1,9 @@
+CR sets toggle register to true if contents match.
+BT jumps if Toggle register is true. Load the operand in IC.
+These 2 are used in tandem.
+Load only the first operand of GD in IR[3] and make IR[4] as 0 since it starts only from a multiple of 10.
+Call terminate function after H through MOS.
+
+$AMJ000100030001 => 0001 is the ID. 0003 is the total time limit. 0001 is the total number of output lines printed. (How many PD instructions are there)
+
+Set SI when GD, PD and H occur. Switch from user mode to master mode.
