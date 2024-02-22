@@ -1,0 +1,120 @@
+;Add two numbers
+
+$AMJ
+GD 01
+GD 02
+LR 01
+AR 02
+SR 03
+PD 03
+HLT
+$DTA
+1234
+4321
+$END
+
+;Reverse a number
+
+$AMJ
+GD 01
+LR 02
+LOOP
+CR 01
+BT REVERSE_END
+MR 03
+MD 10
+MR 01
+MD 10
+AR 02
+ML 10
+AR 03
+BR LOOP
+REVERSE_END
+PD 02
+HLT
+$DTA
+12345
+$END
+
+;square a number
+
+$AMJ
+GD 01
+MR 02
+ML 02
+PD 02
+HLT
+$DTA
+5
+$END
+
+;Check if the number is palindrome
+
+$AMJ
+GD 01
+MR 02
+LR 03
+LOOP
+CR 02
+BT PALINDROME_END
+MD 10
+AR 03
+ML 10
+MD 10
+BR LOOP
+PALINDROME_END
+CR 01
+BE IS_PALINDROME
+HLT
+IS_PALINDROME
+PD 01
+HLT
+$DTA
+1221
+$END
+
+;Check if number is even
+$AMJ
+GD 01    
+MD 02    
+CR 02   
+BE IS_EVEN 
+PD ODD   
+HLT      
+
+IS_EVEN  
+PD EVEN   
+HLT    
+
+$DTA
+7      
+$END
+
+;Check if number is prime
+
+$AMJ
+GD 01
+LR 02
+LOOP
+CR 02
+BP NOT_PRIME
+MD 02
+BE NOT_PRIME
+AR 02
+BR LOOP
+
+NOT_PRIME
+PD NOT_PRIME
+HLT
+
+PRIME
+PD PRIME
+HLT
+
+$DTA
+13
+$END
+
+
+
+
