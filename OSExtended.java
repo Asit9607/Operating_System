@@ -152,11 +152,26 @@ public class OSExtended
                     compRegister(operand);
 //                        System.out.println(Arrays.toString(C));
                     break;
-
                 case "BT":
                    branch(address, operand);
                     //load memory to IR
                     break;
+                case "AD":
+                    add(address);
+                    j++;
+                    break;
+                case "SB":
+                    Subtract(address);
+                    j++;
+                    break;
+                case "ML":
+                    Multiple(address);
+                    j++;
+                    break;
+                case "DV":
+                    Divide(address);
+                    j++;
+                    break;    
 
                 default:
                     if(instruction.contains("H"))
