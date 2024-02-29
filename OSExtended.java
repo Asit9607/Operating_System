@@ -335,6 +335,162 @@ public class OSExtended
         }
     }
 
+    
+private static void add(int address)
+    {
+            int r=0;
+            int r2=0;
+        for (int i=0;i<4;i++)
+        {
+            if (R[i]!='\0')
+            {
+                    int operand1 = Character.getNumericValue(R[i]);
+                    r=(r*10)+operand1;
+            }
+
+        }
+
+        for (int i=0;i<4;i++)
+        {
+            if (memory[address][i]!='\0')
+            {
+                    int operand2 = Character.getNumericValue(memory[address][i]);
+                    r2=(r2*10)+operand2;
+            }
+
+        }
+            int result = r + r2;
+
+        for (int i=3;i>=0;i--)
+        {
+                if(result!=0)
+                {
+                    int rem=result%10;
+                    char cr=Character.forDigit(rem,10);
+                    R[i]=cr;
+                    result=result/10;
+                }
+
+        }
+
+    }
+    private static void Multiple(int address)
+    {
+        int r=0;
+        int r2=0;
+        for (int i=0;i<4;i++)
+        {
+            if (R[i]!='\0')
+            {
+                int operand1 = Character.getNumericValue(R[i]);
+                r=(r*10)+operand1;
+            }
+
+        }
+
+        for (int i=0;i<4;i++)
+        {
+            if (memory[address][i]!='\0')
+            {
+                int operand2 = Character.getNumericValue(memory[address][i]);
+                r2=(r2*10)+operand2;
+            }
+
+        }
+        int result = r * r2;
+
+        for (int i=3;i>=0;i--)
+        {
+            if(result!=0)
+            {
+                int rem=result%10;
+                char cr=Character.forDigit(rem,10);
+                R[i]=cr;
+                result=result/10;
+            }
+
+        }
+
+    }
+
+    private static void Subtract(int address)
+    {
+        int r=0;
+        int r2=0;
+        for (int i=0;i<4;i++)
+        {
+            if (R[i]!='\0')
+            {
+                int operand1 = Character.getNumericValue(R[i]);
+                r=(r*10)+operand1;
+            }
+
+        }
+
+        for (int i=0;i<4;i++)
+        {
+            if (memory[address][i]!='\0')
+            {
+                int operand2 = Character.getNumericValue(memory[address][i]);
+                r2=(r2*10)+operand2;
+            }
+
+        }
+        int result = r - r2;
+
+        for (int i=3;i>=0;i--)
+        {
+            if(result!=0)
+            {
+                int rem=result%10;
+                char cr=Character.forDigit(rem,10);
+                R[i]=cr;
+                result=result/10;
+            }
+
+        }
+
+    }
+
+    private static void Divide(int address)
+    {
+        int r=0;
+        int r2=0;
+        for (int i=0;i<4;i++)
+        {
+            if (R[i]!='\0')
+            {
+                int operand1 = Character.getNumericValue(R[i]);
+                r=(r*10)+operand1;
+            }
+
+        }
+
+        for (int i=0;i<4;i++)
+        {
+            if (memory[address][i]!='\0')
+            {
+                int operand2 = Character.getNumericValue(memory[address][i]);
+                r2=(r2*10)+operand2;
+            }
+
+        }
+        int result = r / r2;
+
+        for (int i=3;i>=0;i--)
+        {
+            if(result!=0)
+            {
+                int rem=result%10;
+                char cr=Character.forDigit(rem,10);
+                R[i]=cr;
+                result=result/10;
+            }
+
+        }
+
+    }
+
     public static void main(String[] args)
     {
         OSExtended.doFinal("D:/Advay/JavaProjects/GeneralProblems/jobs.txt");
