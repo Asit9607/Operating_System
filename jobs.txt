@@ -1,17 +1,13 @@
 ;Add two numbers
 
 $AMJ
-GD 01
-GD 02
-LR 01
-AR 02
-SR 03
-PD 03
-HLT
+GD10GD20LR10AD20SR30PD30
 $DTA
-1234
-4321
+2342
+1421
 $END
+
+
 
 ;Reverse a number
 
