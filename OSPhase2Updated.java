@@ -22,11 +22,12 @@ public class OSPhase2Updated
     private static char[]IC = new char[2];
     private static boolean[]C = new boolean[1];          // can we make it boolean??
     private static char[][] memory = new char[300][4];
-    private static char SI;
+    private static char SI, TI, PI;
     private static char[] PTR = new char[2];
     private static PCB pcb;
     private static boolean[] isAllocated = new boolean[memory.length];
     private static BufferedReader reader;
+    private static String output;
     private static int charArrayToInt(char[] arr){
         return Integer.parseInt(new String(arr));
     }
@@ -89,8 +90,8 @@ public class OSPhase2Updated
                     pcb.NGD+=countSubstringOccurrences(line, "GD");
                     char[] temp = {'0', '0'};
                     IC = temp;
-                    System.out.println("Current line: " + line + "\n");
-                    System.out.println("Memory:");
+//                    System.out.println("Current line: " + line + "\n");
+//                    System.out.println("Memory:");
                     printMemory();
                     prevLineDTA = false;
                 }
@@ -110,7 +111,12 @@ public class OSPhase2Updated
         Arrays.fill(IC, '\u0000');
         Arrays.fill(C, false);
         Arrays.fill(isAllocated, false);
-        int pageTableAddress = (int)(Math.random()*30);
+        SI = TI = PI = '0';
+        output = "";
+        int pageTableAddress;
+        do{
+            pageTableAddress = (int)(Math.random()*30);
+        }while (pageTableAddress<10);
         isAllocated[pageTableAddress] = true;
         PTR[0] = Character.forDigit(pageTableAddress/10, 10);
         PTR[1] = Character.forDigit(pageTableAddress%10, 10);
@@ -121,6 +127,7 @@ public class OSPhase2Updated
 
     private static int addressMap(int virtualAddress){
         int row = charArrayToInt(PTR)*10 + virtualAddress/10;
+        System.out.println("Page table entry: " + Arrays.toString(memory[row]));
         return charArrayToInt(memory[row])*10 + virtualAddress%10;
     }
 
@@ -137,12 +144,12 @@ public class OSPhase2Updated
         }
         if(allAllocated){
             System.out.println("Memory full.");
-            terminate();
+            EM(7);
         }
         do{
             block = (int) (Math.random()*30);
         }
-        while(isAllocated[block]);
+        while(isAllocated[block] || block<10);
 //        System.out.println("Block: " + block);
 //        System.out.println("PTR: " + PTR);
 //        System.out.println("Int conversion: "+ charArrayToInt(PTR));
@@ -183,10 +190,8 @@ public class OSPhase2Updated
 
     private static void load(String line, int address){
         if(isAllocated[address/10]){
-            System.out.println("Memory specified by GD already occupied.");
-            terminate();
+            EM(8);
         }
-        //====================raise the necessary interrupt====================
 
         for(int i = 0; i<blockLen; i++){
             int row = charArrayToInt(PTR)*10 + i;
@@ -214,15 +219,14 @@ public class OSPhase2Updated
             }
         }
     }
+
+
     private static void execute(){
 
         int virtualAddress = 0;
         while(true)
         {
-            //get the address from IC in numeric form
-            //System.out.println("IC "+ Arrays.toString(IC));
-
-            //=====================handle the case where memory is empty====================
+            if(SI=='3') break;
             int realAddress = addressMap(charArrayToInt(IC));
 
             //increment IC
@@ -247,9 +251,9 @@ public class OSPhase2Updated
                     SI = '1';
                     MOS(SI, operand);
                     pcb.TC += 2;
-                    pcb.DC++;
                     if(pcb.TC>pcb.TTL)
                     {
+                        SI = '3';
                         EM(3);
                     }
                     break;
@@ -258,7 +262,13 @@ public class OSPhase2Updated
                     SI = '2';
                     MOS(SI, operand);
 
-                    pcb.TC=+2;
+                    pcb.LC++;
+                    System.out.println("PCB TLL: " + pcb.TLL + "Line Count: " + pcb.LC);
+                    if(pcb.LC>pcb.TLL)
+                    {
+                        EM(2);
+                    }
+                    pcb.TC++;
                     if(pcb.TC>pcb.TTL)
                     {
                         EM(3);
@@ -344,26 +354,19 @@ public class OSPhase2Updated
 
             case '1':
                 getdata(operand);
-                pcb.DC++;
-                if(pcb.DC>pcb.NGD)
-                {
-                    EM(1);
-                }
-
                 break;
 
             case '2':
                 printdata(operand);
-                pcb.LC++;
                 if(pcb.LC>pcb.TLL)
                 {
                     EM(2);
-                    terminate();
+                    terminate(2);
                 }
                 break;
 
             case '3':
-                terminate();
+                terminate(0);
                 break;
 
             default:
@@ -371,30 +374,49 @@ public class OSPhase2Updated
         }
     }
 
-    public static void terminate()
+    public static void terminate(int exitCode)
     {
+        //clear the memory to avoid garbage in the next job
+        int pageTableAddress = charArrayToInt(PTR)*10;
+        for(int i = pageTableAddress; i<pageTableAddress+10; i++){
+            if(memory[i][0]=='\u0000') break;
+            int blockAddress = charArrayToInt(memory[i])*10;
+            for(int j = blockAddress; j<blockAddress+10; j++){
+                if(memory[j][0]=='\u0000') break;
+                Arrays.fill(memory[j], '\u0000');
+            }
+        }
+
+        //write to the output file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt", true))) {
-            // Write your content here
-            writer.write("\n\n");
+            String exitLine = "Job finished with exit code " + exitCode + "\n";
+            int numIns = charArrayToInt(IC)-1;
+            String lastIns;
+            if(IR[0]=='H') lastIns = "H";
+            else lastIns = new String(Arrays.copyOfRange(IR, 0, 2));
+            String status = "Last executed ins: " + lastIns + "\tRun time: "
+                    + pcb.TC + "\tLines printed: " + pcb.LC + "\tNo. of executed ins: " +  numIns;
+
+            if(!output.isEmpty()) writer.write(output + "\n");
+            writer.write(exitLine);
+            writer.write(status);
+            writer.write("\n\n\n");
             writer.flush();
             writer.close();
+
         } catch (IOException e) {
-            // Handle exception
             e.printStackTrace();
         }
     }
 
     private static void getdata(int address) {
         if (address > 290) {
-            System.out.println("Address exceeds memory.");
-            terminate();
-            //==========================handle this as expected==========================
+            EM(5);
         }
         //load the line with the load function
         try {
             String line = reader.readLine();
             if(line.charAt(0)=='$') EM(1);
-            System.out.println("Line: "+line);
             load(line, address);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -418,15 +440,7 @@ public class OSPhase2Updated
             }
             if(breakFlag) break;
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt", true))) {
-            // Write your content here
-            writer.write(sb.toString());
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            // Handle exception
-            e.printStackTrace();
-        }
+        output = sb.toString();
     }
     private  static void loadregister(int address)
     {
@@ -635,34 +649,47 @@ public class OSPhase2Updated
 
     }
     static void EM(int i) {
-        //=================== terminate the program after encountering these errors ==========================
         switch (i) {
             case 1:
                 System.out.println("Out of Data Error");
+                terminate(1);
                 break;
             case 2:
                 System.out.println("Line Limit Exceeded Error");
+                terminate(2);
                 break;
             case 3:
                 System.out.println("Time Limit Exceeded Error");
+                terminate(3);
                 break;
 
             case 4:
                 System.out.println("Operation Code Error");
+                terminate(4);
                 break;
 
             case 5:
                 System.out.println("Operand Error");
+                terminate(5);
                 break;
 
             case 6:
-                System.out.println("Invalid Page Fault ");
+                System.out.println("Invalid Page Fault");
+                terminate(6);
                 break;
+
+            case 7:
+                System.out.println("Memory full");
+                terminate(7);
+
+            case 8:
+                System.out.println("Trying to store data in allocated memory for the program");
+                terminate(8);
         }
     }
 
     public static void main(String[] args)
     {
-        doFinal("D:/Advay/JavaProjects/GeneralProblems/testJobs.txt");
+        doFinal("D:/Advay/JavaProjects/GeneralProblems/jobs.txt");
     }
 }
